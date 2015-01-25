@@ -13,9 +13,21 @@ public class CrimeLab {
     private Context mAppContext;
     private ArrayList<Crime> mCrimes;
 
+    private static final String TAG = "CrimeLab";
+    private static final String FILENAME = "crimes.json";
+
+    private CrimeIntentJSONSerializer mSerializer;
+
     public CrimeLab(Context appContext) {
         mAppContext = appContext;
-        mCrimes = new ArrayList<Crime>();
+
+        mSerializer = new CrimeIntentJSONSerializer(appContext, FILENAME);
+        try {
+            mCrimes = mSerializer.loadCrimes();
+        } catch (Exception e) {
+            e.printStackTrace();
+            mCrimes = new ArrayList<Crime>();
+        }
     }
 
     public static CrimeLab get(Context c){
@@ -40,5 +52,17 @@ public class CrimeLab {
 
     public void addCrime(Crime c){
         mCrimes.add(c);
+    }
+
+    public boolean saveCrimes(){
+        try {
+            mSerializer.saveCrimes(mCrimes);
+            //Log.d(TAG, "CRIME SAVED TO FILE");
+            //Toast.makeText(mAppContext, "CRIME SAVED TO FILE",Toast.LENGTH_LONG).show();
+            return true;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 }
