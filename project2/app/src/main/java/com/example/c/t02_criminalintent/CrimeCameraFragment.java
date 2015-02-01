@@ -1,5 +1,6 @@
 package com.example.c.t02_criminalintent;
 
+import android.content.Context;
 import android.hardware.Camera;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -11,8 +12,10 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Created by c on 2015-02-01.
@@ -22,16 +25,21 @@ public class CrimeCameraFragment extends Fragment {
 
     private Camera mCamera;
     private SurfaceView mSurfaceView;
+    private View mProgressContainer;
 
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View v = inflater.inflate(R.layout.fragment_crime_camera, container, false);
 
+        mProgressContainer = v.findViewById(R.id.crime_camera_progressContainer);
+        mProgressContainer.setVisibility(View.INVISIBLE);
+
         Button takePicButton = (Button) v.findViewById(R.id.crime_camera_button);
         takePicButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                getActivity().finish();
+                if(mCamera != null)
+                    mCamera.takePicture(mShutterCallback, null, mPictureCallback);
             }
         });
 
@@ -99,6 +107,37 @@ public class CrimeCameraFragment extends Fragment {
             mCamera = null;
         }
     }
+
+    private Camera.PictureCallback mPictureCallback = new Camera.PictureCallback() {
+        @Override
+        public void onPictureTaken(byte[] data, Camera camera) {
+            String fileName = UUID.randomUUID().toString()+".jpg";
+            FileOutputStream fos = null;
+
+            try {
+                fos = getActivity().openFileOutput(fileName, Context.MODE_PRIVATE);
+                fos.write(data);
+            } catch (Exception e) {
+                e.printStackTrace();
+            } finally {
+                try {
+                    if (fos != null)
+                        fos.close();
+                }catch(Exception e){
+                    e.printStackTrace();
+                }
+            }
+
+            getActivity().finish();
+        }
+    };
+
+    private Camera.ShutterCallback mShutterCallback = new Camera.ShutterCallback() {
+        @Override
+        public void onShutter() {
+            mProgressContainer.setVisibility(View.VISIBLE);
+        }
+    };
 }
 
 
