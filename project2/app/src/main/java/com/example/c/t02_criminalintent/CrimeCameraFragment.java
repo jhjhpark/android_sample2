@@ -1,6 +1,8 @@
 package com.example.c.t02_criminalintent;
 
+import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.hardware.Camera;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -22,6 +24,8 @@ import java.util.UUID;
  */
 public class CrimeCameraFragment extends Fragment {
     private static final String TAG = "CrimeCameraFragment";
+    public static final String EXTRA_PHOTO_FILENAME =
+            "com.example.c.t02_criminalintent.photo_filename";
 
     private Camera mCamera;
     private SurfaceView mSurfaceView;
@@ -65,8 +69,13 @@ public class CrimeCameraFragment extends Fragment {
                     return;
 
                 Camera.Parameters params = mCamera.getParameters();
+
                 Camera.Size s = getBestSupportedSize(params.getSupportedPreviewSizes(), width,height);
                 params.setPreviewSize(s.width, s.height);
+
+                s = getBestSupportedSize(params.getSupportedPictureSizes(), width, height);
+                params.setPictureSize(s.width, s.height);
+
                 mCamera.setParameters(params);
 
                 mCamera.startPreview();
@@ -113,12 +122,15 @@ public class CrimeCameraFragment extends Fragment {
         public void onPictureTaken(byte[] data, Camera camera) {
             String fileName = UUID.randomUUID().toString()+".jpg";
             FileOutputStream fos = null;
+            boolean suceess = true;
 
             try {
                 fos = getActivity().openFileOutput(fileName, Context.MODE_PRIVATE);
                 fos.write(data);
+
             } catch (Exception e) {
                 e.printStackTrace();
+                suceess = false;
             } finally {
                 try {
                     if (fos != null)
@@ -126,6 +138,14 @@ public class CrimeCameraFragment extends Fragment {
                 }catch(Exception e){
                     e.printStackTrace();
                 }
+            }
+
+            if(suceess) {
+                Intent intent = new Intent();
+                intent.putExtra(EXTRA_PHOTO_FILENAME, fileName);
+                getActivity().setResult(Activity.RESULT_OK, intent);
+            }else{
+                getActivity().setResult(Activity.RESULT_CANCELED);
             }
 
             getActivity().finish();
